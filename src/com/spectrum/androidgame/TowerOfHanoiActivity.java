@@ -1,3 +1,4 @@
+package com.spectrum.androidgame;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -10,20 +11,22 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.debug.Debug;
 
 public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
-	private static int CAMERA_WIDTH = 400;
-	private static int CAMERA_HEIGHT = 800;
+	private static int CAMERA_WIDTH = 800;
+	private static int CAMERA_HEIGHT = 480;
 	private ITextureRegion backgroundTextureRegion;
 	private ITextureRegion towerTextureRegion;
 	private ITextureRegion ring1;
 	private ITextureRegion ring2;
 	private ITextureRegion ring3;
+	private Sprite tower1;
+	private Sprite tower2;
+	private Sprite tower3;
 
 	public EngineOptions onCreateEngineOptions() {
 		Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
