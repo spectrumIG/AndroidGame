@@ -10,8 +10,12 @@ import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
@@ -19,7 +23,9 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.debug.Debug;
 
+import android.graphics.Color;
 import android.media.RingtoneManager;
+import android.opengl.GLES20;
 
 public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 	private static int CAMERA_WIDTH = 800;
@@ -35,6 +41,10 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 	private Stack stack1;
 	private Stack stack2;
 	private Stack stack3;
+
+	private int score = 0;
+	private Text scoreText;
+	private Font font;
 
 	public EngineOptions onCreateEngineOptions() {
 		Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
@@ -86,6 +96,13 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 			ring1.load();
 			ring2.load();
 			ring3.load();
+			
+			FontFactory.setAssetBasePath("fonts/");
+			this.font = FontFactory.createFromAsset(this.getFontManager(),
+					this.getTextureManager(), 512, 512,
+					TextureOptions.BILINEAR, this.getAssets(), "Plok.ttf", 32,
+					true, Color.BLACK);
+			this.font.load();
 
 			this.backgroundTextureRegion = TextureRegionFactory
 					.extractFromTexture(backgroundITexture);
@@ -118,6 +135,12 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 				getVertexBufferObjectManager());
 		this.tower3 = new Sprite(604, 63, this.towerTextureRegion,
 				getVertexBufferObjectManager());
+		
+		this.scoreText = new Text(5, 5, this.font, "Score: 0", "Score: XXXX".length(), this.getVertexBufferObjectManager());
+		this.scoreText.setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		this.scoreText.setAlpha(0.5f);
+		scene.getChildByIndex(0).attachChild(this.scoreText);
+		
 		scene.attachChild(this.tower1);
 		scene.attachChild(this.tower2);
 		scene.attachChild(this.tower3);
@@ -236,9 +259,11 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 					tower.getX() + tower.getWidth() / 2 - ring.getWidth() / 2,
 					((Ring) stack.peek()).getY() - ring.getHeight());
 		}
-		
+
 		stack.add(ring);
 		ring.setStack(stack);
 		ring.setTower(tower);
+		this.score += 1;
+		this.scoreText.setText("Score: " + this.score);
 	}
 }
