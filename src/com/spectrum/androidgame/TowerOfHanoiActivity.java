@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Stack;
 
+import org.andengine.audio.music.Music;
+import org.andengine.audio.music.MusicFactory;
+import org.andengine.audio.sound.Sound;
+import org.andengine.audio.sound.SoundFactory;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -28,6 +32,21 @@ import android.media.RingtoneManager;
 import android.opengl.GLES20;
 
 public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
+	@Override
+	protected synchronized void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+	}
+
+	private static final String ASSET_SCORE_TYPEFACE = "Plok.ttf";
+	private static final String ASSET_FONTS = "fonts/";
+	private static final String ASSET_SFX = "sfx/";
 	private static int CAMERA_WIDTH = 800;
 	private static int CAMERA_HEIGHT = 480;
 	private ITextureRegion backgroundTextureRegion;
@@ -45,11 +64,18 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 	private int score = 0;
 	private Text scoreText;
 	private Font font;
+	private Music music;
+	private Sound sound;
 
 	public EngineOptions onCreateEngineOptions() {
 		Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
-				new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+		EngineOptions engineOptions = new EngineOptions(true,
+				ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(
+						CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+		engineOptions.getAudioOptions().setNeedsMusic(true);
+		engineOptions.getAudioOptions().setNeedsSound(true);
+
+		return engineOptions;
 
 	}
 
@@ -96,13 +122,31 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 			ring1.load();
 			ring2.load();
 			ring3.load();
-			
-			FontFactory.setAssetBasePath("fonts/");
+
+			FontFactory.setAssetBasePath(ASSET_FONTS);
 			this.font = FontFactory.createFromAsset(this.getFontManager(),
 					this.getTextureManager(), 512, 512,
-					TextureOptions.BILINEAR, this.getAssets(), "Plok.ttf", 32,
-					true, Color.BLACK);
+					TextureOptions.BILINEAR, this.getAssets(),
+					ASSET_SCORE_TYPEFACE, 32, true, Color.BLACK);
 			this.font.load();
+
+			SoundFactory.setAssetBasePath(ASSET_SFX);
+			MusicFactory.setAssetBasePath(ASSET_SFX);
+
+			try {
+				this.sound = SoundFactory.createSoundFromAsset(
+						getSoundManager(), this, "gruntsound.wav");
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				this.music = MusicFactory.createMusicFromAsset(
+						getMusicManager(), this, "happy.mp3");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 			this.backgroundTextureRegion = TextureRegionFactory
 					.extractFromTexture(backgroundITexture);
@@ -135,12 +179,14 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 				getVertexBufferObjectManager());
 		this.tower3 = new Sprite(604, 63, this.towerTextureRegion,
 				getVertexBufferObjectManager());
-		
-		this.scoreText = new Text(5, 5, this.font, "Score: 0", "Score: XXXX".length(), this.getVertexBufferObjectManager());
-		this.scoreText.setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+		this.scoreText = new Text(5, 5, this.font, "Score: 0",
+				"Score: XXXX".length(), this.getVertexBufferObjectManager());
+		this.scoreText.setBlendFunction(GLES20.GL_SRC_ALPHA,
+				GLES20.GL_ONE_MINUS_SRC_ALPHA);
 		this.scoreText.setAlpha(0.5f);
 		scene.getChildByIndex(0).attachChild(this.scoreText);
-		
+
 		scene.attachChild(this.tower1);
 		scene.attachChild(this.tower2);
 		scene.attachChild(this.tower3);
@@ -229,23 +275,43 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 		if (ring.collidesWith(this.tower1)
 				&& (this.stack1.size() == 0 || ring.getWeight() < ((Ring) this.stack1
 						.peek()).getWeight())) {
+			this.sound.play();
 			stack = this.stack1;
 			tower = this.tower1;
+
+			this.score += 1;
+			this.scoreText.setText("Score: " + this.score);
 
 		} else if (ring.collidesWith(this.tower2)
 				&& (this.stack2.size() == 0 || ring.getWeight() < ((Ring) this.stack2
 						.peek()).getWeight())) {
+
+			this.sound.play();
+
 			stack = this.stack2;
 			tower = this.tower2;
+
+			this.score += 1;
+			this.scoreText.setText("Score: " + this.score);
 
 		} else if (ring.collidesWith(this.tower3)
 				&& (this.stack3.size() == 0 || ring.getWeight() < ((Ring) this.stack3
 						.peek()).getWeight())) {
+
+			this.sound.play();
+
 			stack = this.stack3;
 			tower = this.tower3;
+
+			this.score += 1;
+			this.scoreText.setText("Score: " + this.score);
 		} else {
+			this.sound.play();
+
 			stack = ring.getStack();
 			tower = ring.getTower();
+			this.score += 1;
+			this.scoreText.setText("Score: " + this.score);
 		}
 		ring.getStack().remove(ring);
 
@@ -263,7 +329,23 @@ public class TowerOfHanoiActivity extends SimpleBaseGameActivity {
 		stack.add(ring);
 		ring.setStack(stack);
 		ring.setTower(tower);
-		this.score += 1;
-		this.scoreText.setText("Score: " + this.score);
+
 	}
+
+	@Override
+	public synchronized void onResumeGame() {
+		if(this.music != null && !this.music.isPlaying()){
+			music.play();
+		}
+		super.onResumeGame();
+	}
+
+	@Override
+	public synchronized void onPauseGame() {
+		if(this.music !=null && this.music.isPlaying()){
+			music.pause();
+		}
+		super.onPauseGame();
+	}
+	
 }
